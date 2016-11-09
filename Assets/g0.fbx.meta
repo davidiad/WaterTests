@@ -1,22 +1,15 @@
 fileFormatVersion: 2
-guid: b96b4a29e20e24c6aa46df71391c3e64
-timeCreated: 1478631277
+guid: 0b9cd0438672f4b9b86679ab3d2cd2e7
+timeCreated: 1478674380
 licenseType: Pro
 ModelImporter:
   serializedVersion: 19
   fileIDToRecycleName:
     100000: //RootNode
-    100002: Grid_MeshPart0
-    100004: Grid_MeshPart1
     400000: //RootNode
-    400002: Grid_MeshPart0
-    400004: Grid_MeshPart1
-    2300000: Grid_MeshPart0
-    2300002: Grid_MeshPart1
-    3300000: Grid_MeshPart0
-    3300002: Grid_MeshPart1
-    4300000: Grid_MeshPart0
-    4300002: Grid_MeshPart1
+    2300000: //RootNode
+    3300000: //RootNode
+    4300000: G0
   materials:
     importMaterials: 1
     materialName: 0
