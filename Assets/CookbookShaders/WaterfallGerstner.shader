@@ -74,6 +74,7 @@
 	{
 		float4 vertex : POSITION;
 		float3 normal : NORMAL;
+		float4 texcoord : TEXCOORD0; // uv
 	};
 
 	// interpolator structs
@@ -135,7 +136,10 @@
 		v2f o;
 
 		// a float to hold the amount of intensity adjustment from the wave map
-		float adjustmentFromWaveMap = (tex2Dlod(_GMap, half4(v.vertex.xz / 100.0, 1.0, 1.0)));
+		// to set wave map in world space
+		//float adjustmentFromWaveMap = (tex2Dlod(_GMap, half4(v.vertex.xz / 100.0, 1.0, 1.0)));
+		// to set map with uv's
+		float adjustmentFromWaveMap = (tex2Dlod(_GMap, half4( v.texcoord.xy/1.5, 1.0, 1.0 )));
 
 		half3 worldSpaceVertex = mul(unity_ObjectToWorld,(v.vertex)).xyz;
 		half3 vtxForAni = (worldSpaceVertex).xzz;
@@ -156,8 +160,10 @@
 		);
 
 		// adjust the factor (100.0 here) according to the size of the object
-		offsets *= (tex2Dlod(_GMap, half4(v.vertex.xz / 100.0, 1.0, 1.0)));
-
+		// to set wave map in world space
+		//offsets *= (tex2Dlod(_GMap, half4(v.vertex.xz / 100.0, 1.0, 1.0)));
+		// to set map with uv's
+		offsets *= (tex2Dlod(_GMap, half4( v.texcoord.xy/1.5, 1.0, 1.0 )));
 
 		///// Adjust offset for normal of vertex
 		offsets.x = offsets.x + v.normal.x;
@@ -203,6 +209,7 @@
        // o.Albedo = 1;
         o.Metallic = _Metallic;
 		o.Smoothness = _Glossiness;
+		//o.Normal = normalize(o.Normal);
 
     }
     ENDCG
