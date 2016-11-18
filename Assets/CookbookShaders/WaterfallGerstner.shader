@@ -181,35 +181,47 @@
 
 
 			// To rotate the offset by the vertex normal, in the case where the vertex is not flat and pointing straight up
-			// TODO:- seems like we'd need to save the magnitude of offsets, normalize offsets, and multiply the new offsets by the saved magnitude.
-			// Code from http://stackoverflow.com/questions/32257338/vertex-position-relative-to-normal (credit: mysteryDate)
-			// Our 3 vectors
-			float3 pos;
-			float3 new_up; // up relative to the poly
-			float3 up = float3(0,1,0); // up
+			// add a conditional so the rotation is only recalc'd when the normal is not straight up
+			if (abs(v.normal.x) > 0.01 || abs(v.normal.z) > 0.01) {
+				// Code from http://stackoverflow.com/questions/32257338/vertex-position-relative-to-normal (credit: mysteryDate)
+				// Our 3 vectors
+				float3 pos;
+				float3 new_up; // up relative to the poly
+				float3 up = float3(0,1,0); // up
 
-			// Build the rotation matrix using notation from the link above
-			float3 new_v = cross(up, new_up);
-			float s = length(new_v);  // Sine of the angle
-			float c = dot(up, new_up); // Cosine of the angle
-			float3x3 VX = float3x3 (
-	  		  0, -1 * new_v.z, new_v.y,
-	   			 new_v.z, 0, -1 * new_v.x,
-	  		  -1 * new_v.y, new_v.x, 0
-			); // This is the skew-symmetric cross-product matrix of v
-			float3x3 I = float3x3 (
-	  			1, 0, 0,
-	    		0, 1, 0,
-	   		 	0, 0, 1
-			); // The identity matrix
-			float3x3 R = I + VX + mul(VX, VX) * (1 - c)/pow(s,2); // The rotation matrix! YAY!
+				//// added by df. save the magnitude of the offsets vector, and tie the 
+				float offsetMagnitude = length(offsets);
+				pos = normalize(offsets);
+				new_up = v.normal;
+				////END df
 
-			// Finally we rotate
-			float3 new_pos = mul(R, pos);
-			////// END code from mysteryDate
 
-			v.vertex.xyz += offsets;
+				// Build the rotation matrix using notation from the link above
+				float3 new_v = cross(up, new_up);
+				float s = length(new_v);  // Sine of the angle
+				float c = dot(up, new_up); // Cosine of the angle
+				float3x3 VX = float3x3 (
+		  		  0, -1 * new_v.z, new_v.y,
+		   			 new_v.z, 0, -1 * new_v.x,
+		  		  -1 * new_v.y, new_v.x, 0
+				); // This is the skew-symmetric cross-product matrix of v
+				float3x3 I = float3x3 (
+		  			1, 0, 0,
+		    		0, 1, 0,
+		   		 	0, 0, 1
+				); // The identity matrix
+				float3x3 R = I + VX + mul(VX, VX) * (1 - c)/pow(s,2); // The rotation matrix! YAY!
 
+				// Finally we rotate
+				float3 new_pos = mul(R, pos);
+				////// END code from mysteryDate
+
+
+				// multiply the new offsets by the saved magnitude
+				v.vertex.xyz += new_pos * offsetMagnitude;
+			} else { // the normal is straight up, so don't recalculate the offsets rotation
+				v.vertex.xyz += offsets;
+			}
 		}
 		
 		half2 tileableUv = worldSpaceVertex.xz;
