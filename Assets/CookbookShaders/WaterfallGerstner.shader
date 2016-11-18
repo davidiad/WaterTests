@@ -139,7 +139,7 @@
 		// to set wave map in world space
 		//float adjustmentFromWaveMap = (tex2Dlod(_GMap, half4(v.vertex.xz / 100.0, 1.0, 1.0)));
 		// to set map with uv's
-		float adjustmentFromWaveMap = (tex2Dlod(_GMap, half4( v.texcoord.xy/1.5, 1.0, 1.0 )));
+		float adjustmentFromWaveMap = (tex2Dlod(_GMap, half4( v.texcoord.xy/3, 1.0, 1.0 )));
 
 		half3 worldSpaceVertex = mul(unity_ObjectToWorld,(v.vertex)).xyz;
 		half3 vtxForAni = (worldSpaceVertex).xzz;
@@ -149,31 +149,66 @@
 
 		if (adjustmentFromWaveMap > 0.0001) {
 
-		Gerstner (
-			offsets, nrml, v.vertex.xyz, vtxForAni,						// offsets, nrml will be written
-			_GAmplitude,												// amplitude
-			_GFrequency,												// frequency
-			_GSteepness,												// steepness
-			_GSpeed,													// speed
-			_GDirectionAB,												// direction # 1, 2
-			_GDirectionCD												// direction # 3, 4
-		);
+			Gerstner (
+				offsets, nrml, v.vertex.xyz, vtxForAni,						// offsets, nrml will be written
+				_GAmplitude,												// amplitude
+				_GFrequency,												// frequency
+				_GSteepness,												// steepness
+				_GSpeed,													// speed
+				_GDirectionAB,												// direction # 1, 2
+				_GDirectionCD												// direction # 3, 4
+			);
 
-		// adjust the factor (100.0 here) according to the size of the object
-		// to set wave map in world space
-		//offsets *= (tex2Dlod(_GMap, half4(v.vertex.xz / 100.0, 1.0, 1.0)));
-		// to set map with uv's
-		offsets *= (tex2Dlod(_GMap, half4( v.texcoord.xy/1.5, 1.0, 1.0 )));
+			// adjust the factor (100.0 here) according to the size of the object
+			// to set wave map in world space
+			//offsets *= (tex2Dlod(_GMap, half4(v.vertex.xz / 100.0, 1.0, 1.0)));
+			// to set map with uv's
+			offsets *= (tex2Dlod(_GMap, half4( v.texcoord.xy/3, 1.0, 1.0 )));
+		
+			///// Adjust offset for normal of vertex
+			//offsets.x = offsets.x + v.normal.x * 12;
+	//		offsets.z = offsets.z + v.normal.z * _GAmplitude * 3;
+	//		offsets.y = offsets.y - ( (1 - v.normal.y) * _GAmplitude * 3 );
 
-		///// Adjust offset for normal of vertex
-		offsets.x = offsets.x + v.normal.x;
-		offsets.z = offsets.z + v.normal.z;
-		offsets.y = offsets.y + v.normal.y;
-		// I think normalizing was working beofre in Salmonid_23 -- why not now?
-		//offsets = normalize(offsets - 0.5);
-		//////////////////
 
-		v.vertex.xyz += offsets;
+			//offsets.y = offsets.y + (1 - v.normal.y) * _GAmplitude.x * 2;
+			//offsets.z = offsets.z + ( (v.normal.z) * _GAmplitude.x * 12 );
+
+			// I think normalizing was working beofre in Salmonid_23 -- why not now?
+			//offsets = normalize(offsets - 0.5);
+			//////////////////
+
+
+
+			// To rotate the offset by the vertex normal, in the case where the vertex is not flat and pointing straight up
+			// TODO:- seems like we'd need to save the magnitude of offsets, normalize offsets, and multiply the new offsets by the saved magnitude.
+			// Code from http://stackoverflow.com/questions/32257338/vertex-position-relative-to-normal (credit: mysteryDate)
+			// Our 3 vectors
+			float3 pos;
+			float3 new_up; // up relative to the poly
+			float3 up = float3(0,1,0); // up
+
+			// Build the rotation matrix using notation from the link above
+			float3 new_v = cross(up, new_up);
+			float s = length(new_v);  // Sine of the angle
+			float c = dot(up, new_up); // Cosine of the angle
+			float3x3 VX = float3x3 (
+	  		  0, -1 * new_v.z, new_v.y,
+	   			 new_v.z, 0, -1 * new_v.x,
+	  		  -1 * new_v.y, new_v.x, 0
+			); // This is the skew-symmetric cross-product matrix of v
+			float3x3 I = float3x3 (
+	  			1, 0, 0,
+	    		0, 1, 0,
+	   		 	0, 0, 1
+			); // The identity matrix
+			float3x3 R = I + VX + mul(VX, VX) * (1 - c)/pow(s,2); // The rotation matrix! YAY!
+
+			// Finally we rotate
+			float3 new_pos = mul(R, pos);
+			////// END code from mysteryDate
+
+			v.vertex.xyz += offsets;
 
 		}
 		
